@@ -1,9 +1,13 @@
 import React, { useEffect, useRef, useState } from "react";
 import { components, questionTypes } from "../utils";
+import GenerateFromJSON from "../components/GenerateFromJSON";
+import { questions } from "../utils/validate";
 
 const CreateQuiz = () => {
   const [titleInputValue, setTitleInputValue] = useState("Untitled Quiz");
   const [title, setTitle] = useState("Untitled Quiz");
+  // below handles GenerateFromJSON.jsx component's open/closed state
+  const [isJSONOpen, setIsJSONOpen] = useState(false)
   const [QuestionComponent, setQuestionComponent] = useState(
     () => components[Object.keys(questionTypes)[0]]
   );
@@ -16,9 +20,9 @@ const CreateQuiz = () => {
     createdAt: new Date().toISOString(),
     totalScore: 0,
     duration: 0,
-    items: [],
+    items: [...questions],
   });
-
+  const [failedInputs, setFailedInputs] = useState([])
   const descriptionRef = useRef("");
 
   // Dynamically update page title and quiz.title
@@ -41,11 +45,11 @@ const CreateQuiz = () => {
   }, [titleInputValue]);
 
   useEffect(() => {
-    console.log(quiz);
+    // console.log(quiz);
   }, [quiz]);
 
   return (
-    <div className="p-4">
+    <div className="p-4 relative">
       <nav className="flex justify-between items-end pb-4">
         <h2 className="font-bold text-lg">{title}</h2>
         <button className="bg-blue-500 text-neutral-50 rounded py-0.5 px-3 transition hover:bg-blue-400 cursor-pointer">
@@ -108,31 +112,64 @@ const CreateQuiz = () => {
             ))}
           </select>
         </div>
-        {quiz.items.map((question, index) => (
-          <QuestionComponent
-            isQuiz={true}
-            question={question}
-            data={quiz}
-            index={index}
-          />
-        ))}
+        <div className="flex flex-col">
+          {quiz.items && quiz.items.map((question, index) => {
+            const QuestionDisplay = components[question.type]
+            return(<QuestionDisplay
+              key={question.id}
+              isQuiz={true}
+              questionData={question}
+              data={quiz}
+              index={index}
+              length={quiz.items.length}
+              onQuestionChange= {setQuiz}
+              // {
+              //   questionData,
+              //   index,
+              //   length,
+              //   onQuestionChange,
+              //   addQuestion,
+              // }
+
+
+
+
+            />)
+          })}
+        </div>
+        {failedInputs.length >0 && <div className="border border-neutral-400 rounded p-2">
+          <h1 className="">{`Below ${failedInputs.length >1? "questions are": "question is"} invalid. Fix the problem and try again.`}</h1>
+          <div className="flex flex-col gap-2">
+            {failedInputs.map(input=>(
+              <div className="border-l-4 ml-2 border-l-red-500">
+                <p className="bg-red-500 text-white">Question {input.questionNumber}</p>
+                {console.log(Object.entries(input.error))}
+                <p className="pl-2 font-medium">{Object.entries(input.error).map((item)=>(
+                  <p>{item[0]}: <span className="font-light">{item[1]}</span></p>
+                ))}</p>
+              </div>
+            ))}
+          </div>
+        </div>}
       </div>
 
       <div className="flex justify-center gap-2 bg-neutral-200 py-8 border-neutral-400 border rounded-lg">
         <button
-          className="bg-white text-neutral-500 border rounded py-0.5 px-3 transition hover:bg-neutral-200 cursor-pointer"
+          className="bg-white text-neutral-500 border rounded py-0.5 px-3 transition hover:bg-neutral-200 cursor-pointer select-none"
           onClick={() => {
-            quiz.questions.push(0);
-            setQuiz((prev) => ({ questions: prev.questions }));
-            console.log(quiz);
+            setFailedInputs([])
           }}
         >
           Add question
         </button>
-        <button className="bg-neutral-500 text-neutral-50 rounded py-0.5 px-3 transition hover:bg-neutral-600 cursor-pointer">
+        <button
+        onClick={()=> {setIsJSONOpen(true); setFailedInputs([])}}
+        className="bg-neutral-500 text-neutral-50 rounded py-0.5 px-3 transition hover:bg-neutral-600 cursor-pointer select-none"
+        >
           Generate from JSON
         </button>
       </div>
+      {isJSONOpen &&<GenerateFromJSON onDisplay={setIsJSONOpen} onSuccess={setQuiz} onFail={setFailedInputs}/>}
     </div>
   );
 };
