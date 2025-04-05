@@ -207,12 +207,7 @@ export const questionTemplates = {
       prompts: Validators.array(Validators.string().min(1)),
       choices: Validators.array(Validators.string().min(1)),
     }),
-    correctMatches: Validators.array(
-      Validators.object({
-        promptIndex: Validators.number(),
-        choiceIndex: Validators.number(),
-      })
-    ),
+    correctMatches: Validators.array(Validators.number().min(0)),
     ...similarParts,
   }),
   shortAnswer: Validators.object({
